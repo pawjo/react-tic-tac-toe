@@ -4,11 +4,12 @@ export default function Game() {
   const [history, setHistory] = useState([Array(9).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
   const [winner, setWinner] = useState(null);
+  const [descSortOrder, setDescSortOrder] = useState(false);
 
   const currentSquares = history[currentMove];
   const xIsNext = currentMove % 2 === 0;
 
-  const moves = history.slice(0, history.length - 1)
+  let moves = history.slice(0, history.length - 1)
     .map((squares, move) => {
       const description = move > 0
         ? 'Go to move #' + (move + 1)
@@ -20,6 +21,9 @@ export default function Game() {
         </li>
       );
     });
+
+  if (descSortOrder)
+    moves = moves.reverse();
 
   const currentMoveText = winner
     ? 'Game over!'
@@ -41,14 +45,21 @@ export default function Game() {
     setCurrentMove(nextMove);
   }
 
+  function changeSortOrder() {
+    setDescSortOrder(!descSortOrder);
+  }
+
   return (
     <div className="game">
       <div className="game-board">
         <Board squares={currentSquares} winner={winner} xIsNext={xIsNext} onPlay={handlePlay} />
       </div>
       <div className="game-info">
-        <ol>{moves}</ol>
-        {currentMoveText}
+        <button className="game-info-button" onClick={changeSortOrder}>Change sort</button>
+        <div className="game-info-list">
+          <ol>{moves}</ol>
+          {currentMoveText}
+        </div>
       </div>
     </div>
   );
