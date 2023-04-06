@@ -21,6 +21,10 @@ export default function Game() {
       );
     });
 
+  const currentMoveText = winner
+    ? 'Game over!'
+    : 'You are at move #' + (currentMove + 1);
+
   function handlePlay(index) {
     const current = xIsNext ? 'X' : 'O';
     const nextSquares = currentSquares.slice();
@@ -44,7 +48,7 @@ export default function Game() {
       </div>
       <div className="game-info">
         <ol>{moves}</ol>
-        You are at move #{currentMove + 1}
+        {currentMoveText}
       </div>
     </div>
   );
@@ -88,11 +92,13 @@ function arrayRange(start, length, step = 1) {
 }
 
 function BoardRow({ squares, startIndex, handleSquareClick }) {
+  const rowSquares = squares.slice(startIndex, startIndex + 3)
+    .map((square, index) =>
+      <Square value={squares[startIndex + index]} onSquareClick={() => handleSquareClick(startIndex + index)} />);
+
   return (
     <div className="board-row">
-      <Square value={squares[startIndex]} onSquareClick={() => handleSquareClick(startIndex)} />
-      <Square value={squares[startIndex + 1]} onSquareClick={() => handleSquareClick(startIndex + 1)} />
-      <Square value={squares[startIndex + 2]} onSquareClick={() => handleSquareClick(startIndex + 2)} />
+      {rowSquares}
     </div>
   );
 }
