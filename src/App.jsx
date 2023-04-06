@@ -2,9 +2,8 @@ import React, { useState } from "react";
 
 export default function Game() {
   const [history, setHistory] = useState([Array(9).fill(null)]);
-  const [isEnd, setIsEnd] = useState(false);
-  const [status, setStatus] = useState('Next player: X');
   const [currentMove, setCurrentMove] = useState(0);
+  const [winner, setWinner] = useState(null);
 
   const currentSquares = history[currentMove];
   const xIsNext = currentMove % 2 === 0;
@@ -29,26 +28,18 @@ export default function Game() {
     setHistory(nextHistory);
     setCurrentMove(nextHistory.length - 1);
 
-    if (currentMove >= 4 && checkIfWinner(nextSquares, current)) {
-      setStatus('Winner is ' + current);
-      setIsEnd(true);
-      return;
-    }
-
-    setStatus('Next player: ' + (xIsNext ? 'O' : 'X'));
+    if (currentMove >= 4 && checkIfWinner(nextSquares, current))
+      setWinner(current);
   }
 
   function jumpTo(nextMove) {
-
     setCurrentMove(nextMove);
   }
-
-
 
   return (
     <div className="game">
       <div className="game-board">
-        <Board squares={currentSquares} isEnd={isEnd} status={status} onPlay={handlePlay} />
+        <Board squares={currentSquares} winner={winner} xIsNext={xIsNext} onPlay={handlePlay} />
       </div>
       <div className="game-info">
         <ol>{moves}</ol>
@@ -57,18 +48,21 @@ export default function Game() {
   );
 }
 
-export function Board({ squares, isEnd, status, onPlay }) {
-
-  function handleSquareClick(index) {
-    if (!squares[index] && !isEnd)
-      onPlay(index);
-  }
+export function Board({ squares, winner, xIsNext, onPlay }) {
+  const status = winner
+    ? 'Winner is ' + winner
+    : 'Next player: ' + (xIsNext ? 'X' : 'O');
 
   const squaresInRow = 3;
   const arr = arrayRange(0, 3, squaresInRow);
   const rows = arr.map((r, index) => (
     <BoardRow key={'row-' + index} squares={squares} startIndex={r} handleSquareClick={handleSquareClick} />
   ));
+
+  function handleSquareClick(index) {
+    if (!squares[index] && !winner)
+      onPlay(index);
+  }
 
   return (
     <div>
