@@ -8,17 +8,18 @@ export default function Game() {
   const currentSquares = history[currentMove];
   const xIsNext = currentMove % 2 === 0;
 
-  const moves = history.map((squares, move) => {
-    const description = move > 0
-      ? 'Go to move #' + move
-      : 'Go to game start';
+  const moves = history.slice(0, history.length - 1)
+    .map((squares, move) => {
+      const description = move > 0
+        ? 'Go to move #' + (move + 1)
+        : 'Go to game start';
 
-    return (
-      <li key={move}>
-        <button onClick={() => jumpTo(move)}>{description}</button>
-      </li>
-    );
-  });
+      return (
+        <li key={move}>
+          <button onClick={() => jumpTo(move)}>{description}</button>
+        </li>
+      );
+    });
 
   function handlePlay(index) {
     const current = xIsNext ? 'X' : 'O';
@@ -43,6 +44,7 @@ export default function Game() {
       </div>
       <div className="game-info">
         <ol>{moves}</ol>
+        You are at move #{currentMove + 1}
       </div>
     </div>
   );
