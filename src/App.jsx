@@ -50,18 +50,16 @@ export default function Game() {
     const nextSquares = currentSquares.slice();
     nextSquares[index] = current;
 
-    if (!finishedGameStatus) {
-      const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
-      setHistory(nextHistory);
-      setCurrentMove(nextHistory.length - 1);
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
 
-      if (currentMove >= 4) {
-        const checkResult = checkIfWinner(nextSquares, current);
-        if (checkResult === -1)
-          setFinishedGameStatus({ symbol: 'd' });
-        else if (checkResult > 0)
-          setFinishedGameStatus({ symbol: current, positions: checkResult });
-      }
+    if (currentMove >= 4) {
+      const checkResult = checkIfWinner(nextSquares, current);
+      if (checkResult === -1)
+        setFinishedGameStatus({ symbol: 'd' });
+      else if (checkResult > 0)
+        setFinishedGameStatus({ symbol: current, positions: checkResult });
     }
   }
 
