@@ -1,15 +1,26 @@
 import React, { useState } from "react";
 
+const winningPositions = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6]
+];
+
 export default function Game() {
   const [history, setHistory] = useState([Array(9).fill(null)]);
   const [currentMove, setCurrentMove] = useState(0);
-  const [winner, setWinner] = useState(null);
+  const [finishedGameStatus, setFinishedGameStatus] = useState(null);
   const [descSortOrder, setDescSortOrder] = useState(false);
 
   const currentSquares = history[currentMove];
   const xIsNext = currentMove % 2 === 0;
 
-  let historyToDisplay = winner ? history : history.slice(0, history.length - 1);
+  let historyToDisplay = finishedGameStatus ? history : history.slice(0, history.length - 1);
 
   let moves = historyToDisplay.map((squares, move) => {
     const description = move > 0
@@ -26,26 +37,30 @@ export default function Game() {
   if (descSortOrder)
     moves = moves.reverse();
 
-  const currentMoveText = winner
+  const currentMoveText = finishedGameStatus
     ? 'Game over!'
     : 'You are at move #' + (currentMove + 1);
 
-  const displayWinnerPositions = winner && currentMove === history.length - 1;
+  const displayWinnerPositions = finishedGameStatus
+    && finishedGameStatus.symbol !== 'd'
+    && currentMove === history.length - 1;
 
   function handlePlay(index) {
     const current = xIsNext ? 'X' : 'O';
     const nextSquares = currentSquares.slice();
     nextSquares[index] = current;
 
-    if (!winner) {
+    if (!finishedGameStatus) {
       const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
       setHistory(nextHistory);
       setCurrentMove(nextHistory.length - 1);
 
       if (currentMove >= 4) {
         const checkResult = checkIfWinner(nextSquares, current);
-        if (checkResult)
-          setWinner({ symbol: current, positions: checkResult });
+        if (checkResult === -1)
+          setFinishedGameStatus({ symbol: 'd' });
+        else if (checkResult > 0)
+          setFinishedGameStatus({ symbol: current, positions: checkResult });
       }
     }
   }
@@ -61,7 +76,7 @@ export default function Game() {
   return (
     <div className="game">
       <div className="game-board">
-        <Board squares={currentSquares} winner={winner} xIsNext={xIsNext} displayWinnerPositions={displayWinnerPositions} onPlay={handlePlay} />
+        <Board squares={currentSquares} finishedGameStatus={finishedGameStatus} xIsNext={xIsNext} displayWinnerPositions={displayWinnerPositions} onPlay={handlePlay} />
       </div>
       <div className="game-info">
         <button className="game-info-button" onClick={changeSortOrder}>Change sort</button>
@@ -74,19 +89,21 @@ export default function Game() {
   );
 }
 
-export function Board({ squares, winner, xIsNext, displayWinnerPositions, onPlay }) {
-  const status = winner
-    ? 'Winner is ' + winner.symbol
+export function Board({ squares, finishedGameStatus, xIsNext, displayWinnerPositions, onPlay }) {
+  const status = finishedGameStatus
+    ? (finishedGameStatus.symbol === 'd')
+      ? 'Game is a draw!'
+      : 'Winner is ' + finishedGameStatus.symbol
     : 'Next player: ' + (xIsNext ? 'X' : 'O');
 
   const squaresInRow = 3;
   const arr = arrayRange(0, 3, squaresInRow);
   const rows = arr.map((r, index) => (
-    <BoardRow key={'row-' + index} squares={squares} startIndex={r} winner={winner} displayWinnerPositions={displayWinnerPositions} handleSquareClick={handleSquareClick} />
+    <BoardRow key={'row-' + index} squares={squares} startIndex={r} winner={finishedGameStatus} displayWinnerPositions={displayWinnerPositions} handleSquareClick={handleSquareClick} />
   ));
 
   function handleSquareClick(index) {
-    if (!squares[index] && !winner)
+    if (!squares[index] && !finishedGameStatus)
       onPlay(index);
   }
 
@@ -104,7 +121,7 @@ function BoardRow({ squares, startIndex, winner, displayWinnerPositions, handleS
   const rowSquares = squares.slice(startIndex, startIndex + 3)
     .map((square, offset) => {
       const currentIndex = startIndex + offset;
-      const highlighted = displayWinnerPositions && winner && winner.positions.includes(currentIndex);
+      const highlighted = displayWinnerPositions && winningPositions[winner.positions].includes(currentIndex);
       return (
         <Square value={squares[currentIndex]} highlighted={highlighted} onSquareClick={() => handleSquareClick(currentIndex)} />
       );
@@ -132,21 +149,42 @@ function arrayRange(start, length, step = 1) {
 }
 
 function checkIfWinner(squares, current) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6]
-  ];
+  let lockedCount = 0;
+  let freeCount = 0;
 
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] === current && squares[b] === current && squares[c] === current)
-      return lines[i];
+  for (let i = 0; i < winningPositions.length; i++) {
+    // const [a, b, c] = lines[i];
+    // if (squares[a] === current && squares[b] === current && squares[c] === current)
+    //   return lines[i];
+
+    let currentCount = 0;
+    let oppositeCount = 0;
+
+    winningPositions[i].forEach(x => {
+      if (squares[x] === current)
+        currentCount++;
+      else if (squares[x])
+        oppositeCount++;
+      else
+        freeCount++;
+    });
+
+    if (currentCount === 3)
+      // return index of winner position
+      return i;
+
+    if (currentCount > 0 && oppositeCount > 0)
+      lockedCount++;
   }
-  return null;
+
+  // return -1 if game is a draw or return 0 if anyone can win
+  const isDraw = lockedCount === 8 || (lockedCount === 7 && freeCount === 2);
+  return isDraw ? -1 : 0;
+}
+
+
+function getOccurence(array, searchValue) {
+  let count = 0;
+  array.forEach(x => x === searchValue && count++);
+  return count;
 }
