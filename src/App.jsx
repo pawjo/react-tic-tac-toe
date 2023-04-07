@@ -13,6 +13,7 @@ const winningPositions = [
 
 export default function Game() {
   const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [positionHistory, setPositionHistory] = useState([{}]);
   const [currentMove, setCurrentMove] = useState(0);
   const [finishedGameStatus, setFinishedGameStatus] = useState(null);
   const [descSortOrder, setDescSortOrder] = useState(false);
@@ -23,8 +24,9 @@ export default function Game() {
   let historyToDisplay = finishedGameStatus ? history : history.slice(0, history.length - 1);
 
   let moves = historyToDisplay.map((squares, move) => {
+    const currentPosition = positionHistory[move];
     const description = move > 0
-      ? 'Go to move #' + (move + 1)
+      ? `Go to move #${move + 1} (${currentPosition.x}, ${currentPosition.y})`
       : 'Go to game start';
 
     return (
@@ -49,9 +51,13 @@ export default function Game() {
     const current = xIsNext ? 'X' : 'O';
     const nextSquares = currentSquares.slice();
     nextSquares[index] = current;
-
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
     setHistory(nextHistory);
+
+    const nextPosition = { x: ~~(index / 3), y: index % 3 };
+    const nextHistoryPosition = [...positionHistory.slice(0, currentMove + 1), nextPosition];
+    setPositionHistory(nextHistoryPosition);
+
     setCurrentMove(nextHistory.length - 1);
 
     if (currentMove >= 4) {
